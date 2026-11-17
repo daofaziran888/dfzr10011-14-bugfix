@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import threading
 from typing import Any
 
 from app.seed import SEED_ROWS
@@ -14,6 +15,9 @@ class Store:
         self._tables: dict[str, list[dict[str, Any]]] = {
             name: [dict(row) for row in rows] for name, rows in SEED_ROWS.items()
         }
+        # 断点恢复与聚合归并会跨表联动（恢复回执、恢复结果、核对清单），
+        # 用一把可重入锁把「字段保存 + 状态流转 + 回执记账」串成原子操作。
+        self.lock = threading.RLock()
 
     def module_names(self) -> list[str]:
         return sorted(self._tables)
@@ -26,6 +30,9 @@ class Store:
             if int(row.get("id", 0)) == entry_id:
                 return row
         return None
+
+    def next_id(self, module: str) -> int:
+        return max((int(row.get("id", 0)) for row in self.rows(module)), default=0) + 1
 
     def overview(self) -> dict[str, object]:
         modules: list[dict[str, object]] = []

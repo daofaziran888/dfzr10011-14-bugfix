@@ -19,6 +19,10 @@ class ActionResult(BaseModel):
     ok: bool
     message: str
     entry: dict[str, Any] | None = None
+    # 断点续采恢复链路的附加载体：恢复结果、失败记录、核对清单条目
+    result: dict[str, Any] | None = None
+    failure: dict[str, Any] | None = None
+    checklist: list[dict[str, Any]] | None = None
 
 
 class EntryPayload(BaseModel):
